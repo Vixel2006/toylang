@@ -3,6 +3,7 @@
 #include <string>
 
 namespace lexer {
+
 enum Token {
     tok_eof = -1,
 
@@ -15,8 +16,15 @@ enum Token {
     tok_number = -5,
 };
 
-static std::string IdentifierStr;
-static double NumVal;
+class Lexer {
+  public:
+    std::string identifier_str;
+    double num_val;
 
-static int gettok();
+    Lexer() {}
+    ~Lexer() = default;
+
+    int get_token();
+};
+
 } // namespace lexer

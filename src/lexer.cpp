@@ -1,52 +1,68 @@
 #include "lexer.h"
 
-static int lexer::gettok() {
-    static int LastChar = ' ';
+namespace lexer {
+
+int Lexer::get_token() {
+    static int last_char = ' ';
 
     // Skip whitespaces
-    while (isspace(LastChar))
-        LastChar = getchar();
+    while (isspace(last_char))
+        last_char = getchar();
 
-    if (isalpha(LastChar)) {
+    if (isalpha(last_char) || last_char == '_') {
         // Lexing Identifier or keyword
-        lexer::IdentifierStr = LastChar;
-        while (isalnum(LastChar = getchar()))
-            lexer::IdentifierStr += LastChar;
+        this->identifier_str = "";
+        this->identifier_str += last_char;
+        while (isalnum(last_char = getchar()) || last_char == '_')
+            this->identifier_str += last_char;
 
-        if (lexer::IdentifierStr == "def")
-            return lexer::tok_def;
-        if (lexer::IdentifierStr == "extern")
-            return lexer::tok_extern;
+        if (this->identifier_str == "def") {
+            return tok_def;
+        }
+        if (this->identifier_str == "extern") {
+            return tok_extern;
+        }
+        return tok_identifier;
     }
 
     // Lexing an int or double
-    if (isdigit(LastChar) || LastChar == '.') {
-        std::string NumStr;
+    if (isdigit(last_char) || last_char == '.') {
+        std::string num_str;
+        bool decimal_seen = false; // Track if a decimal point has been seen
         do {
-            NumStr += LastChar;
-            LastChar = getchar();
-        } while (isdigit(LastChar) || LastChar == '.');
+            if (last_char == '.') {
+                if (decimal_seen) {
+                    // If a decimal has already been seen, this is an error or end of number
+                    break; // Exit the loop, strtod will handle the valid part
+                }
+                decimal_seen = true;
+            }
+            num_str += last_char;
+            last_char = getchar();
+        } while (isdigit(last_char) || last_char == '.');
 
-        lexer::NumVal = strtod(NumStr.c_str(), 0);
-        return lexer::tok_number;
+        this->num_val = strtod(num_str.c_str(), 0);
+        return tok_number;
     }
 
     // Lex a comment
-    if (LastChar == '#') {
+    if (last_char == '#') {
         do {
-            LastChar = getchar();
-        } while (LastChar != EOF && LastChar != '\n' && LastChar != '\r');
+            last_char = getchar();
+        } while (last_char != EOF && last_char != '\n' && last_char != '\r');
 
-        if (LastChar != EOF)
-            return lexer::gettok();
+        if (last_char != EOF)
+            return lexer::Lexer::get_token();
     }
 
     // Lex the end of a file
-    if (LastChar == EOF)
-        return lexer::tok_eof;
+    if (last_char == EOF) {
+        return tok_eof;
+    }
 
-    int ThisChar = LastChar;
-    LastChar = getchar();
-
-    return ThisChar;
+    int this_char = last_char;
+    last_char = getchar();
+    return this_char;
 }
+
+} // namespace lexer
